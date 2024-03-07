@@ -5,5 +5,12 @@ UCI Bootcamp Module 10 - SQLAlchemy Challenge
 
 ## Honolulu, Hawaii Climate App!
 
+### climate_starter.ipynb
+Part 1 - Using Python and SQL Alchemy in Jupyter Notebook to analyze climate. 
+
+### app.py
+Part 2 - Design a Flask API based on queries developed from Part 1
+
+
 
 
