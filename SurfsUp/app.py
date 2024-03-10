@@ -111,40 +111,30 @@ def stations():
 # Tobs Route
 @app.route('/api/v1.0/tobs')
 def tobs():
-    # Create the session
-    session = Session(engine)
+    # Query to retrieve the most active station
+    most_active_station_id = session.query(
+        Measurement.station
+    ).group_by(
+        Measurement.station
+    ).order_by(
+        func.count(Measurement.station).desc()
+    ).first()[0]
 
-    # Query Setup
-    # Added Measurement.station to the query to include the station ID
-    temp_stats = session.query(
-        Measurement.station,
-        func.min(Measurement.tobs),
-        func.max(Measurement.tobs),
-        func.avg(Measurement.tobs)
+    # Query to retrieve the last 12 months of temperature observation data for the most active station
+    most_recent_date = session.query(func.max(Measurement.date)).scalar()
+    one_year_ago = dt.datetime.strptime(most_recent_date, '%Y-%m-%d') - dt.timedelta(days=365)
+
+    temperature_data = session.query(
+        Measurement.date, Measurement.tobs
     ).filter(
-        Measurement.date >= dt.date(2017, 8, 23) - dt.timedelta(days=365)
-    ).filter(Measurement.station == 'USC00519281').all()
+        Measurement.station == most_active_station_id
+    ).filter(Measurement.date >= one_year_ago).all()
 
-    # Close the session
-    session.close()
+    # Convert query results to a list of dictionaries
+    temperature_list = [{"Date": date, "Temperature": tobs} for date, tobs in temperature_data]
 
-    # Creating an output list
-    output = []
-
-    # Create a dictionary
-    for record in temp_stats:
-        temp_dict = {
-            'Station ID': record[0],
-            'Min Temp': record[1],
-            'Max Temp': record[2],
-            'Average Temp': record[3]
-        }
-
-        # Append each record to the list
-        output.append(temp_dict)
-
-    # Jsonify the output
-    return jsonify(output)
+    # Return the JSON representation of the list of dictionaries
+    return jsonify(temperature_list)
 
 
 # temp_stats_start Route
